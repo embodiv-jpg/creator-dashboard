@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creator Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a1a; }
+.top-bar { background: #fff; border-bottom: 1px solid #e8e6e0; padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 56px; }
+.logo { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+.nav-btn { background: none; border: none; font-size: 13px; color: #888; cursor: pointer; padding: 4px 0; border-bottom: 2px solid transparent; font-family: inherit; transition: all .15s; }
+.nav-btn.active { color: #1a1a1a; border-bottom-color: #D4537E; }
+.api-indicator { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #E24B4A; }
+.dot.connected { background: #1D9E75; }
+.main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.section { display: none; }
+.section.active { display: block; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.metric-card { background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #eee; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 26px; font-weight: 600; }
+.metric-sub { font-size: 12px; color: #1D9E75; margin-top: 4px; }
+.card { background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid #eee; margin-bottom: 1rem; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 1rem; color: #1a1a1a; }
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.media-item { border-radius: 8px; overflow: hidden; border: 1px solid #eee; cursor: pointer; transition: transform .15s; }
+.media-item:hover { transform: scale(1.02); }
+.media-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f0ede8; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.media-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.media-info { padding: 8px; }
+.media-type { font-size: 10px; color: #888; text-transform: uppercase; }
+.media-date { font-size: 11px; color: #aaa; }
+.insight-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0ede8; font-size: 13px; }
+.insight-row:last-child { border-bottom: none; }
+.insight-key { color: #888; }
+.insight-val { font-weight: 600; }
+.loading { text-align: center; padding: 3rem; color: #aaa; font-size: 14px; }
+.error-box { background: #FCEBEB; border-radius: 8px; padding: 1rem; font-size: 13px; color: #A32D2D; margin-bottom: 1rem; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.bar-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f5f4f0; font-size: 13px; }
+.bar-row:last-child { border-bottom: none; }
+.bar-wrap { flex: 1; background: #f5f4f0; border-radius: 4px; height: 6px; }
+.bar-fill { height: 6px; border-radius: 4px; background: #D4537E; }
+.bar-num { font-size: 12px; color: #888; min-width: 40px; text-align: right; }
+select { font-size: 13px; padding: 8px 12px; border: 1px solid #e0ddd8; border-radius: 8px; background: #fff; color: #1a1a1a; font-family: inherit; cursor: pointer; width: 100%; margin-bottom: 1rem; }
+textarea { width: 100%; min-height: 80px; border: 1px solid #e0ddd8; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: inherit; background: #faf9f7; color: #1a1a1a; resize: vertical; }
+.gen-btn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 10px; margin-right: 8px; }
+.gen-btn:hover { background: #333; }
+.script-out { background: #faf9f7; border-radius: 8px; padding: 1rem; font-size: 13px; line-height: 1.7; margin-top: 1rem; border-left: 3px solid #D4537E; display: none; white-space: pre-wrap; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-header { text-align: center; font-size: 11px; color: #888; padding: 4px 0; font-weight: 600; }
+.cal-day { border-radius: 8px; padding: 6px 4px; text-align: center; min-height: 52px; font-size: 12px; background: #f5f4f0; }
+.cal-day.has-post { background: #E1F5EE; }
+.cal-day.has-post .cal-num { font-weight: 600; color: #1D9E75; }
+.cal-day.mid-post { background: #FAEEDA; }
+.cal-day.mid-post .cal-num { color: #BA7517; }
+.cal-num { color: #888; margin-bottom: 2px; }
+.cal-reach { font-size: 10px; font-weight: 600; color: #1D9E75; }
+.tag { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 20px; margin: 2px; }
+.tag-pink { background: #FBEAF0; color: #D4537E; }
+.tag-teal { background: #E1F5EE; color: #1D9E75; }
+@media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } .main { padding: 1rem; } }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="logo">Creator Dashboard</span>
+  <button class="nav-btn active" onclick="showSection('growth', this)">Crecimiento</button>
+  <button class="nav-btn" onclick="showSection('media', this)">Contenido</button>
+  <button class="nav-btn" onclick="showSection('scripts', this)">Guiones</button>
+  <button class="nav-btn" onclick="showSection('calendar', this)">Calendario</button>
+  <div class="api-indicator">
+    <div class="dot" id="api-dot"></div>
+    <span id="api-label">Conectando...</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div id="growth" class="section active">
+    <div id="profile-metrics" class="metric-grid">
+      <div class="metric-card"><div class="metric-label">Cargando...</div><div class="metric-value">—</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Posts recientes — engagement</div>
+        <div id="engagement-bars"><div class="loading">Cargando...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tipos de contenido</div>
+        <div id="content-types"><div class="loading">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="media" class="section">
+    <div class="card">
+      <div class="card-title">Tu contenido — últimos 20 posts</div>
+      <div id="media-grid" class="media-grid"><div class="loading">Cargando posts...</div></div>
+    </div>
+    <div class="card" id="post-detail" style="display:none;">
+      <div class="card-title" id="detail-title">Métricas del post</div>
+      <div id="detail-insights"></div>
+    </div>
+  </div>
+
+  <div id="scripts" class="section">
+    <div class="card">
+      <div class="card-title">Tu voz y estilo</div>
+      <textarea id="voice-input" placeholder="Ej: Hablo desde mi propia experiencia, no como experta. Uso frases cortas. Mezclo español e inglés. Me dirijo a mi audiencia como 'amiga'..."></textarea>
+    </div>
+    <div class="card">
+      <div class="card-title">Selecciona un post para convertir a guión</div>
+      <select id="post-select-scripts"><option>— Cargando posts —</option></select>
+      <div style="display:flex;flex-wrap:wrap;">
+        <button class="gen-btn" onclick="generateScript('reel')">Guión para Reel ↗</button>
+        <button class="gen-btn" onclick="generateScript('caption')">Caption optimizado ↗</button>
+        <button class="gen-btn" onclick="generateScript('tiktok')">Adaptar para TikTok ↗</button>
+      </div>
+      <div id="script-output" class="script-out"></div>
+    </div>
+  </div>
+
+  <div id="calendar" class="section">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <button onclick="changeMonth(-1)" style="background:none;border:1px solid #e0ddd8;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:14px;">‹</button>
+        <span style="font-weight:600;font-size:15px;" id="cal-month-label"></span>
+        <button onclick="changeMonth(1)" style="background:none;border:1px solid #e0ddd8;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:14px;">›</button>
+      </div>
+      <div class="cal-grid" id="cal-headers"></div>
+      <div class="cal-grid" style="margin-top:4px;" id="cal-days"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let allMedia = [];
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const days = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+
+async function init() {
+  try {
+    const [profile, media] = await Promise.all([
+      fetch(`${API}/api/instagram/profile`).then(r => r.json()),
+      fetch(`${API}/api/instagram/media`).then(r => r.json())
+    ]);
+    if (profile.error || media.error) throw new Error(profile.error?.message || media.error?.message);
+    document.getElementById('api-dot').classList.add('connected');
+    document.getElementById('api-label').textContent = '@' + profile.username + ' — conectada';
+    renderProfile(profile);
+    allMedia = media.data || [];
+    renderMediaGrid(allMedia);
+    renderEngagementBars(allMedia);
+    renderContentTypes(allMedia);
+    populateScriptSelect(allMedia);
+    renderCalendar();
+  } catch (err) {
+    document.getElementById('api-label').textContent = 'Error de conexión';
+    document.getElementById('profile-metrics').innerHTML = `<div class="error-box">No se pudo conectar con Instagram API: ${err.message}</div>`;
+  }
+}
+
+function renderProfile(p) {
+  document.getElementById('profile-metrics').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Seguidores</div><div class="metric-value">${(p.followers_count||0).toLocaleString()}</div></div>
+    <div class="metric-card"><div class="metric-label">Posts totales</div><div class="metric-value">${p.media_count||0}</div></div>
+    <div class="metric-card"><div class="metric-label">Cuenta</div><div class="metric-value" style="font-size:18px;">@${p.username}</div></div>
+  `;
+}
+
+function renderMediaGrid(media) {
+  const grid = document.getElementById('media-grid');
+  if (!media.length) { grid.innerHTML = '<div class="loading">No hay posts aún.</div>'; return; }
+  grid.innerHTML = media.map(m => `
+    <div class="media-item" onclick="loadPostDetail('${m.id}', '${(m.caption||'').substring(0,60).replace(/'/g,"\\'")}')">
+      <div class="media-thumb">
+        ${m.media_url ? `<img src="${m.media_url}" alt="post">` : '📷'}
+      </div>
+      <div class="media-info">
+        <div class="media-type">${m.media_type}</div>
+        <div class="media-date">${new Date(m.timestamp).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEngagementBars(media) {
+  const el = document.getElementById('engagement-bars');
+  const top = media.slice(0,6);
+  if (!top.length) { el.innerHTML = '<div class="loading">Sin datos</div>'; return; }
+  el.innerHTML = top.map((m,i) => {
+    const caption = (m.caption||'Sin caption').substring(0,35);
+    const pct = Math.round(((6-i)/6)*100);
+    return `<div class="bar-row">
+      <span style="flex:2;font-size:12px;color:#555;">${caption}...</span>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <span class="bar-num">${new Date(m.timestamp).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderContentTypes(media) {
+  const el = document.getElementById('content-types');
+  const counts = {};
+  media.forEach(m => { counts[m.media_type] = (counts[m.media_type]||0)+1; });
+  el.innerHTML = Object.entries(counts).map(([type, count]) => `
+    <div class="bar-row">
+      <span style="flex:1;font-size:13px;">${type}</span>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(count/media.length*100)}%"></div></div>
+      <span class="bar-num">${count} posts</span>
+    </div>`).join('');
+}
+
+async function loadPostDetail(mediaId, caption) {
+  const detail = document.getElementById('post-detail');
+  const insights = document.getElementById('detail-insights');
+  document.getElementById('detail-title').textContent = caption + '...';
+  detail.style.display = 'block';
+  insights.innerHTML = '<div class="loading">Cargando métricas...</div>';
+  try {
+    const data = await fetch(`${API}/api/instagram/insights/${mediaId}`).then(r => r.json());
+    if (data.error) throw new Error(data.error.message);
+    insights.innerHTML = (data.data||[]).map(m => `
+      <div class="insight-row">
+        <span class="insight-key">${m.name}</span>
+        <span class="insight-val">${(m.values?.[0]?.value||m.value||0).toLocaleString()}</span>
+      </div>`).join('');
+  } catch (err) {
+    insights.innerHTML = `<div class="error-box">${err.message}</div>`;
+  }
+}
+
+function populateScriptSelect(media) {
+  const sel = document.getElementById('post-select-scripts');
+  sel.innerHTML = media.map(m => `<option value="${m.id}">${new Date(m.timestamp).toLocaleDateString('es-ES',{day:'numeric',month:'short'})} — ${(m.caption||'Sin caption').substring(0,60)}</option>`).join('');
+}
+
+function generateScript(type) {
+  const voice = document.getElementById('voice-input').value.trim();
+  const sel = document.getElementById('post-select-scripts');
+  const caption = sel.options[sel.selectedIndex]?.text || '';
+  const labels = { reel: 'Reel de Instagram', caption: 'caption optimizado', tiktok: 'video de TikTok' };
+  const prompt = `Convierte este post en un guión de ${labels[type]} para contenido de wellness y sanación del sistema nervioso en español.\n\nMi voz: ${voice || 'Conversacional, cercana, desde experiencia personal, no como experta.'}\n\nPost original: ${caption}\n\nIncluye hook de apertura potente, desarrollo en 3-4 puntos breves, cierre con llamada a la acción. Que suene exactamente a mi voz.`;
+  const out = document.getElementById('script-output');
+  out.style.display = 'block';
+  out.textContent = '✦ Abriendo Claude para generar tu guión...';
+  setTimeout(() => { window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank'); }, 300);
+}
+
+function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = `${months[currentMonth]} ${currentYear}`;
+  document.getElementById('cal-headers').innerHTML = days.map(d => `<div class="cal-header">${d}</div>`).join('');
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const adjusted = (firstDay + 6) % 7;
+  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  const postDays = {};
+  allMedia.forEach(m => {
+    const d = new Date(m.timestamp);
+    if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+      postDays[d.getDate()] = m;
+    }
+  });
+  let html = '';
+  for (let i=0; i<adjusted; i++) html += `<div></div>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const p = postDays[d];
+    const cls = p ? (d % 3 === 0 ? 'cal-day mid-post' : 'cal-day has-post') : 'cal-day';
+    html += `<div class="${cls}">
+      <div class="cal-num">${d}</div>
+      ${p ? `<div class="cal-reach">${p.media_type === 'VIDEO' ? '▶' : '◼'}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('cal-days').innerHTML = html;
+}
+
+function changeMonth(d) {
+  currentMonth += d;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
